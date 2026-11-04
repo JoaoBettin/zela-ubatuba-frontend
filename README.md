@@ -18,7 +18,7 @@ Bootstrap, ícones e Leaflet vêm de CDN, então é preciso estar conectado à i
 2. **Front-end:** a geolocalização (GPS) do navegador só funciona em `localhost` ou HTTPS, então **não abra o `index.html` com duplo clique**. Use:
    - a extensão *Live Server* do VS Code (*Go Live*), ou
    - `python -m http.server 8000` na pasta do projeto e acesse `http://localhost:8000`.
-3. Se a API estiver em outro endereço, ajuste `CONFIG.BASE_URL` em `api.js`.
+3. Se a API estiver em outro endereço, ajuste `CONFIG.BASE_URL` em `js/api.js`.
 
 ### Modo demonstração (sem back-end)
 
@@ -26,25 +26,22 @@ Abra a página com `?mock=1` (por exemplo `http://localhost:8000/?mock=1`) para 
 
 ## Estrutura
 
-| Arquivo | Função |
-|---|---|
-| `index.html` | Telas (Início, Mapa, Minhas ocorrências) e modais (reportar e detalhe) |
-| `style.css` | Estilos; as cores ficam nas variáveis `:root` no topo |
-| `script.js` | Interface: navegação, mapas, formulário, geolocalização, foto |
-| `admin.html`, `admin.js`, `admin.css` | Tela de administração (painel, solicitações, categorias) |
-| `api.js` | Camada de acesso à API: chamadas, tradução de campos, modo demonstração |
-| `mock-data.js` | Dados fictícios (formato da API) para o modo demonstração |
-| `logo-zela.svg` | Logo provisória |
-
-## Tela de administração
-
-Abra `admin.html` (ou `admin.html?mock=1` para a demonstração). Há um link "Ver site público" no topo.
-
-- **Painel:** total e contagem pelas 5 situações, gráficos por situação, por categoria e novas solicitações nos últimos 14 dias.
-- **Solicitações:** busca (protocolo, descrição, local, e-mail, telefone), filtros por situação e categoria, paginação de 15 em 15, detalhe com foto, telefone, e-mail e coordenadas, **alterar situação** (`PATCH /solicitacoes/{id}/status`), **excluir** (`DELETE`) e **exportar CSV** da lista filtrada.
-- **Categorias:** criar, editar e excluir (`POST/PUT/DELETE /categorias`), com os limites do back-end (nome até 100, descrição até 255, nome não repetido).
-- Concluída e Cancelada são situações finais: a API recusa novas mudanças (422), e a tela já bloqueia o seletor.
-- **Sem login:** a API não tem autenticação, então a tela também não tem. Qualquer um que abrir a página altera dados e vê telefone e e-mail. Usar só em testes até o back-end proteger as rotas (ex.: Spring Security) e o front enviar o token.
+```
+zela-ubatuba-frontend/
+├── index.html          Site do cidadão (Início, Mapa, Minhas ocorrências)
+├── admin/
+│   ├── index.html      Tela de administração  (endereço: /admin/)
+│   ├── admin.js
+│   └── admin.css
+├── css/style.css       Estilos; as cores ficam nas variáveis :root no topo
+├── js/
+│   ├── api.js          Acesso à API: chamadas, tradução de campos, modo demonstração
+│   ├── script.js       Interface do site: navegação, mapas, formulário, GPS, foto
+│   └── mock-data.js    Dados fictícios (formato da API) para o modo demonstração
+├── img/logo-zela.svg   Logo provisória
+├── .gitignore
+└── README.md
+```
 
 ## Integração com a API
 

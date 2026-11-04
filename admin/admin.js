@@ -542,8 +542,8 @@
   function iniciar() {
     if (API.CONFIG.USE_MOCK) {
       $('#rodapeModo').textContent = 'Modo demonstração: dados fictícios, salvos só neste navegador.';
-      const link = document.querySelector('a[href="index.html"]');
-      if (link) link.setAttribute('href', 'index.html?mock=1');
+      const link = document.querySelector('a[href="../index.html"]');
+      if (link) link.setAttribute('href', '../index.html?mock=1');
     } else {
       $('#rodapeModo').textContent = `Dados da API (${API.CONFIG.BASE_URL})`;
     }
