@@ -1,0 +1,333 @@
+/* admin.css — complementos da tela de administração (usa as variáveis de style.css) */
+
+.adm-titulo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.adm-titulo:focus {
+  outline: none;
+}
+
+/* ---------- Abas ---------- */
+
+.adm-abas {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+}
+
+.adm-aba {
+  color: #fff;
+  text-decoration: none;
+  padding: 0.6rem 1rem;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+}
+
+.adm-aba:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.adm-aba[aria-current="page"] {
+  border-bottom-color: #ffd166;
+  font-weight: 600;
+}
+
+.zu-header .adm-aba:focus-visible {
+  outline: 3px solid #ffd166;
+  outline-offset: -3px;
+}
+
+/* ---------- Indicadores ---------- */
+
+.adm-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.adm-kpi {
+  background: #fff;
+  border: 1px solid var(--zu-borda);
+  border-radius: var(--zu-raio);
+  box-shadow: var(--zu-sombra);
+  padding: 0.9rem 1rem;
+  min-width: 0;
+}
+
+.adm-kpi-rotulo {
+  font-size: 0.85rem;
+  color: var(--zu-texto-suave);
+  margin: 0 0 0.25rem;
+}
+
+.adm-kpi-valor {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+  color: var(--zu-texto);
+}
+
+.adm-kpi-destaque {
+  background: var(--zu-azul-800);
+  border-color: var(--zu-azul-800);
+}
+
+.adm-kpi-destaque .adm-kpi-rotulo,
+.adm-kpi-destaque .adm-kpi-valor {
+  color: #fff;
+}
+
+.adm-kpi-destaque .adm-kpi-valor {
+  font-size: 2.6rem;
+}
+
+/* ---------- Barras (uma cor, ordenadas) ---------- */
+
+.adm-barras {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.adm-barra-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.2rem 0.75rem;
+  align-items: baseline;
+}
+
+.adm-barra-nome {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+
+.adm-barra-valor {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-barra-trilho {
+  grid-column: 1 / -1;
+  height: 12px;
+  background: #e6eef4;
+  border-radius: 4px;
+}
+
+.adm-barra {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  background: #2a78d6; /* azul da paleta validada (série 1) */
+  border-radius: 0 4px 4px 0;
+}
+
+/* ---------- Colunas por dia ---------- */
+
+.adm-dias {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 6px;
+  align-items: end;
+  height: 160px;
+  border-bottom: 1px solid var(--zu-borda);
+}
+
+.adm-dia {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  min-width: 0;
+}
+
+.adm-dia-valor {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--zu-texto-suave);
+  margin-bottom: 2px;
+}
+
+.adm-dia-coluna {
+  width: 100%;
+  background: #2a78d6;
+  border-radius: 4px 4px 0 0;
+  min-height: 2px;
+}
+
+.adm-dia-coluna.vazia {
+  background: #cfdbe5;
+}
+
+.adm-dias-rotulos {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: var(--zu-texto-suave);
+  text-align: center;
+}
+
+@media (max-width: 575.98px) {
+  .adm-dias-rotulos span:nth-child(even) {
+    visibility: hidden;
+  }
+}
+
+/* ---------- Filtros e tabela ---------- */
+
+.adm-filtros {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)) minmax(0, 0.8fr);
+  gap: 0.75rem;
+}
+
+@media (max-width: 991.98px) {
+  .adm-filtros {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .adm-filtros > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .adm-filtros {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .adm-filtros input,
+  .adm-filtros select {
+    font-size: 1rem;
+  }
+}
+
+.adm-tabela-quadro {
+  overflow: hidden;
+}
+
+/* Textos .visually-hidden são position:absolute; sem um ancestral posicionado eles
+   escapam do quadro rolável e alargam a página inteira no celular. */
+.adm-tabela-quadro,
+.adm-tabela-quadro .table-responsive {
+  position: relative;
+}
+
+.adm-tabela th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--zu-texto-suave);
+  white-space: nowrap;
+}
+
+.adm-celula-texto {
+  max-width: 340px;
+  min-width: 200px;
+}
+
+.adm-celula-texto .adm-linha-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.adm-celula-texto .adm-linha-2 {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  color: var(--zu-texto-suave);
+}
+
+.adm-protocolo {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* ---------- Detalhe ---------- */
+
+.adm-foto {
+  max-width: 100%;
+  max-height: 280px;
+  border-radius: 12px;
+  border: 1px solid var(--zu-borda);
+  object-fit: contain;
+  background: #f3f7fa;
+}
+
+.adm-foto-vazia {
+  display: grid;
+  place-items: center;
+  height: 120px;
+  border: 1px dashed var(--zu-borda);
+  border-radius: 12px;
+  color: var(--zu-texto-suave);
+}
+
+.adm-dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.4rem 1rem;
+  margin: 0;
+}
+
+.adm-dl dt {
+  color: var(--zu-texto-suave);
+  font-weight: 600;
+}
+
+.adm-dl dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 575.98px) {
+  .adm-dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .adm-dl dd {
+    margin-bottom: 0.5rem;
+  }
+}
+
+.adm-vazio {
+  text-align: center;
+  color: var(--zu-texto-suave);
+  padding: 2rem 1rem;
+}
+
+/* ---------- Botões com contraste reforçado (azul do tema) ---------- */
+
+.btn-outline-primary {
+  --bs-btn-color: var(--zu-azul-700);
+  --bs-btn-border-color: var(--zu-azul-700);
+  --bs-btn-hover-bg: var(--zu-azul-700);
+  --bs-btn-hover-border-color: var(--zu-azul-700);
+  --bs-btn-active-bg: var(--zu-azul-800);
+  --bs-btn-active-border-color: var(--zu-azul-800);
+  --bs-btn-disabled-color: var(--zu-azul-700);
+  --bs-btn-disabled-border-color: var(--zu-azul-700);
+}
+
+.adm-form-status h3:focus {
+  outline: none;
+}
+
+.adm-dl a {
+  color: var(--zu-azul-700);
+}

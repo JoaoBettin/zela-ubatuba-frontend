@@ -11,6 +11,10 @@
  *   GET  /solicitacoes/{lngId}
  *   GET  /solicitacoes/{lngId}/imagem                (foto em Base64)
  *   POST /solicitacoes                               (JSON, foto em Base64)
+ *   --- só a tela de administração (admin.html) ---
+ *   PATCH  /solicitacoes/{lngId}/status              ({ strStatus })
+ *   DELETE /solicitacoes/{lngId}                     (exclusão lógica)
+ *   POST/PUT/DELETE /categorias[/{lngId}]            ({ strNome, strDescricao })
  *
  * TRADUÇÃO DOS CAMPOS (API -> interface):
  *   lngId                  -> id (texto)
@@ -23,8 +27,8 @@
  *   categoria.{lngId,strNome} -> categoria (id) + categoriaInfo
  *   imagem (metadados)     -> temFoto (a foto em si vem de obterFoto)
  *   (protocolo não existe na API: é gerado a partir do id, ex. ZU-2026-000012)
- *   strTelefoneUsuario / strEmailUsuario são DESCARTADOS ao ler: a interface
- *   nunca guarda nem mostra dados de contato de outras pessoas.
+ *   strTelefoneUsuario / strEmailUsuario são DESCARTADOS ao ler nas telas
+ *   públicas. Só as funções *Admin os mantêm (telefone / email).
  *
  * MODO DEMONSTRAÇÃO (mock): com CONFIG.USE_MOCK = true (ou abrindo a página
  * com ?mock=1) o próprio navegador simula a API, no mesmo formato de resposta,
@@ -53,6 +57,9 @@
   };
 
   const CHAVE_MOCK = 'zela.mock.solicitacoes';
+  const CHAVE_MOCK_STATUS = 'zela.mock.status'; // { id: { strStatus, dtmAtualizacao } }
+  const CHAVE_MOCK_EXCLUIDAS = 'zela.mock.excluidas'; // [ids]
+  const CHAVE_MOCK_CATEGORIAS = 'zela.mock.categorias'; // lista completa, após a 1ª edição
   const chaveMinhas = () => (CONFIG.USE_MOCK ? 'zela.mock.minhasIds' : 'zela.api.minhasIds');
 
   /* ==========================================================
@@ -142,10 +149,10 @@
     return String(valor).replace(/(\.\d{3})\d+/, '$1');
   }
 
-  function adaptarSolicitacao(s) {
+  function adaptarSolicitacao(s, comContato = false) {
     const criadoEm = paraIso(s.dtmSolicitacao);
     const categoriaInfo = s.categoria ? adaptarCategoria(s.categoria) : null;
-    return {
+    const base = {
       id: String(s.lngId),
       protocolo: `ZU-${String(criadoEm || '').slice(0, 4) || new Date().getFullYear()}-${String(s.lngId).padStart(6, '0')}`,
       categoria: categoriaInfo ? categoriaInfo.id : '',
@@ -158,8 +165,13 @@
       criadoEm,
       atualizadoEm: paraIso(s.dtmAtualizacao) || criadoEm,
       temFoto: Boolean(s.imagem),
-      // telefone e e-mail do cidadão são descartados de propósito
     };
+    // telefone e e-mail do cidadão só são mantidos para a administração
+    if (comContato) {
+      base.telefone = s.strTelefoneUsuario || '';
+      base.email = s.strEmailUsuario || '';
+    }
+    return base;
   }
 
   const TIPOS_IMAGEM = /^image\/(jpeg|png|webp|gif)$/;
@@ -241,7 +253,20 @@
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
   }
 
-  const mockSolicitacoes = () => [...window.ZELA_MOCK.solicitacoes, ...lerLS(CHAVE_MOCK, [])];
+  const mockCategorias = () => lerLS(CHAVE_MOCK_CATEGORIAS, null) || window.ZELA_MOCK.categorias;
+
+  /** Solicitações vigentes: base + criadas, com status alterados, sem as excluídas e com a categoria atual. */
+  function mockSolicitacoes() {
+    const status = lerLS(CHAVE_MOCK_STATUS, {});
+    const excluidas = lerLS(CHAVE_MOCK_EXCLUIDAS, []);
+    const categorias = mockCategorias();
+    return [...window.ZELA_MOCK.solicitacoes, ...lerLS(CHAVE_MOCK, [])]
+      .filter((s) => !excluidas.includes(s.lngId))
+      .map((s) => {
+        const atual = categorias.find((c) => c.lngId === s.categoria.lngId);
+        return { ...s, ...(status[s.lngId] || {}), categoria: atual || s.categoria };
+      });
+  }
   const semFoto = (s) => ({ ...s, imagem: s.imagem ? { ...s.imagem, strDadosBase64: null } : null });
 
   function mockBuscar(id) {
@@ -293,11 +318,12 @@
       throw new ErroApi('Um ou mais campos estão inválidos. Verifique os detalhes.', { status: 400, detalhes: d });
     }
 
-    const categoria = window.ZELA_MOCK.categorias.find((x) => x.lngId === Number(c.lngCategoriaId));
+    const categoria = mockCategorias().find((x) => x.lngId === Number(c.lngCategoriaId));
     if (!categoria) throw new ErroApi(`Categoria não encontrada com o ID: ${c.lngCategoriaId}`, { status: 404 });
     const tamanho = tamanhoBase64(c.imagem.strDadosBase64);
 
-    const proximoId = Math.max(0, ...mockSolicitacoes().map((s) => s.lngId)) + 1;
+    const todosIds = [...window.ZELA_MOCK.solicitacoes, ...lerLS(CHAVE_MOCK, [])].map((s) => s.lngId);
+    const proximoId = Math.max(0, ...todosIds) + 1;
     const agora = localIso();
     const nova = {
       lngId: proximoId,
@@ -334,18 +360,110 @@
     return semFoto(nova);
   }
 
+  const STATUS_VALIDOS = ['ABERTA', 'EM_ANALISE', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'];
+
+  function mockAtualizarStatus(id, corpo) {
+    const atual = mockBuscar(id);
+    const novo = corpo && corpo.strStatus;
+    if (!STATUS_VALIDOS.includes(novo)) {
+      throw new ErroApi('Um ou mais campos estão inválidos. Verifique os detalhes.', {
+        status: 400,
+        detalhes: { strStatus: 'O novo status (strStatus) é obrigatório e deve ser válido' },
+      });
+    }
+    if (atual.strStatus === 'CONCLUIDA' || atual.strStatus === 'CANCELADA') {
+      throw new ErroApi(`Não é permitido alterar o status de uma solicitação já finalizada (${atual.strStatus}).`, { status: 422 });
+    }
+    const mapa = lerLS(CHAVE_MOCK_STATUS, {});
+    mapa[atual.lngId] = { strStatus: novo, dtmAtualizacao: localIso() };
+    gravarLS(CHAVE_MOCK_STATUS, mapa);
+    return semFoto(mockBuscar(id));
+  }
+
+  function mockExcluirSolicitacao(id) {
+    const s = mockBuscar(id);
+    const excluidas = lerLS(CHAVE_MOCK_EXCLUIDAS, []);
+    excluidas.push(s.lngId);
+    gravarLS(CHAVE_MOCK_EXCLUIDAS, excluidas);
+    return null;
+  }
+
+  function mockValidarCategoria(c = {}, idAtual = null) {
+    const nome = String(c.strNome || '').trim();
+    if (!nome) {
+      throw new ErroApi('Um ou mais campos estão inválidos. Verifique os detalhes.', {
+        status: 400, detalhes: { strNome: 'O nome da categoria (strNome) é obrigatório' } });
+    }
+    if (nome.length > 100) {
+      throw new ErroApi('Um ou mais campos estão inválidos. Verifique os detalhes.', {
+        status: 400, detalhes: { strNome: 'O nome da categoria deve ter no máximo 100 caracteres' } });
+    }
+    if (c.strDescricao && String(c.strDescricao).length > 255) {
+      throw new ErroApi('Um ou mais campos estão inválidos. Verifique os detalhes.', {
+        status: 400, detalhes: { strDescricao: 'A descrição deve ter no máximo 255 caracteres' } });
+    }
+    const repetida = mockCategorias().some((x) => x.lngId !== idAtual && x.strNome.toLowerCase() === nome.toLowerCase());
+    if (repetida) {
+      throw new ErroApi(
+        idAtual === null ? `Já existe uma categoria ativa cadastrada com o nome: ${nome}` : `Já existe outra categoria ativa com o nome: ${nome}`,
+        { status: 422 });
+    }
+    return { nome, descricao: c.strDescricao || null };
+  }
+
+  function mockCategoria(id) {
+    const c = mockCategorias().find((x) => String(x.lngId) === String(id));
+    if (!c) throw new ErroApi(`Categoria de problema não encontrada com o ID: ${id}`, { status: 404 });
+    return c;
+  }
+
+  function mockSalvarCategorias(lista) {
+    gravarLS(CHAVE_MOCK_CATEGORIAS, lista);
+  }
+
+  function mockCriarCategoria(corpo) {
+    const { nome, descricao } = mockValidarCategoria(corpo);
+    const lista = structuredClone(mockCategorias());
+    const nova = { lngId: Math.max(0, ...lista.map((x) => x.lngId), ...window.ZELA_MOCK.categorias.map((x) => x.lngId)) + 1,
+      strNome: nome, strDescricao: descricao, dtmCriacao: localIso() };
+    lista.push(nova);
+    mockSalvarCategorias(lista);
+    return nova;
+  }
+
+  function mockAtualizarCategoria(id, corpo) {
+    const atual = mockCategoria(id);
+    const { nome, descricao } = mockValidarCategoria(corpo, atual.lngId);
+    const lista = structuredClone(mockCategorias()).map((x) =>
+      x.lngId === atual.lngId ? { ...x, strNome: nome, strDescricao: descricao } : x);
+    mockSalvarCategorias(lista);
+    return lista.find((x) => x.lngId === atual.lngId);
+  }
+
+  function mockExcluirCategoria(id) {
+    const atual = mockCategoria(id);
+    mockSalvarCategorias(structuredClone(mockCategorias()).filter((x) => x.lngId !== atual.lngId));
+    return null;
+  }
+
   async function mockHttp(caminho, { metodo = 'GET', corpo } = {}) {
     await espera(CONFIG.MOCK_LATENCY_MS);
     const url = new URL(caminho, 'http://mock.local');
     const [recurso, id, sub] = url.pathname.split('/').filter(Boolean);
 
-    if (recurso === 'categorias' && metodo === 'GET' && !id) {
-      return structuredClone(window.ZELA_MOCK.categorias);
+    if (recurso === 'categorias') {
+      if (!id && metodo === 'GET') return structuredClone(mockCategorias());
+      if (!id && metodo === 'POST') return mockCriarCategoria(corpo);
+      if (id && metodo === 'GET') return structuredClone(mockCategoria(id));
+      if (id && metodo === 'PUT') return mockAtualizarCategoria(id, corpo);
+      if (id && metodo === 'DELETE') return mockExcluirCategoria(id);
     }
     if (recurso === 'solicitacoes') {
       if (!id && metodo === 'GET') return mockListar(url.searchParams);
       if (!id && metodo === 'POST') return mockCriar(corpo);
       if (id && !sub && metodo === 'GET') return semFoto(mockBuscar(id));
+      if (id && sub === 'status' && metodo === 'PATCH') return mockAtualizarStatus(id, corpo);
+      if (id && !sub && metodo === 'DELETE') return mockExcluirSolicitacao(id);
       if (id && sub === 'imagem' && metodo === 'GET') {
         const s = mockBuscar(id);
         if (!s.imagem || !s.imagem.strDadosBase64) {
@@ -370,7 +488,7 @@
   }
 
   /** Busca todas as páginas (até MAX_PAGINAS) e devolve a lista já traduzida. */
-  async function listarOcorrencias(filtros = {}) {
+  async function listarOcorrencias(filtros = {}, comContato = false) {
     const itens = [];
     for (let n = 0; n < CONFIG.MAX_PAGINAS; n += 1) {
       const params = new URLSearchParams({
@@ -382,7 +500,7 @@
       if (filtros.categoria) params.set('lngCategoriaId', filtros.categoria);
 
       const pagina = await transporte()(`/solicitacoes?${params}`);
-      itens.push(...(pagina.content || []).map(adaptarSolicitacao));
+      itens.push(...(pagina.content || []).map((s) => adaptarSolicitacao(s, comContato)));
       if (pagina.last !== false) break;
     }
     return itens.sort(porDataDesc);
@@ -455,6 +573,41 @@
     }
   }
 
+  /* ---------- Administração (sem autenticação: a API ainda não tem) ---------- */
+
+  /** Como listarOcorrencias, mas mantém telefone e e-mail do cidadão. */
+  const listarOcorrenciasAdmin = (filtros = {}) => listarOcorrencias(filtros, true);
+
+  /** status: aberta | em_analise | em_andamento | concluida | cancelada */
+  async function atualizarStatus(id, status) {
+    const r = await transporte()(`/solicitacoes/${encodeURIComponent(id)}/status`, {
+      metodo: 'PATCH',
+      corpo: { strStatus: String(status).toUpperCase() },
+    });
+    return adaptarSolicitacao(r, true);
+  }
+
+  async function excluirOcorrencia(id) {
+    await transporte()(`/solicitacoes/${encodeURIComponent(id)}`, { metodo: 'DELETE' });
+    cacheFotos.delete(String(id));
+  }
+
+  const corpoCategoria = (d) => ({ strNome: String(d.nome || '').trim(), strDescricao: String(d.descricao || '').trim() || null });
+
+  async function criarCategoria(dados) {
+    return adaptarCategoria(await transporte()('/categorias', { metodo: 'POST', corpo: corpoCategoria(dados) }));
+  }
+
+  async function atualizarCategoria(id, dados) {
+    return adaptarCategoria(
+      await transporte()(`/categorias/${encodeURIComponent(id)}`, { metodo: 'PUT', corpo: corpoCategoria(dados) })
+    );
+  }
+
+  async function excluirCategoria(id) {
+    await transporte()(`/categorias/${encodeURIComponent(id)}`, { metodo: 'DELETE' });
+  }
+
   window.ZelaAPI = {
     CONFIG,
     ErroApi,
@@ -463,5 +616,11 @@
     listarMinhasOcorrencias,
     criarOcorrencia,
     obterFoto,
+    listarOcorrenciasAdmin,
+    atualizarStatus,
+    excluirOcorrencia,
+    criarCategoria,
+    atualizarCategoria,
+    excluirCategoria,
   };
 })();

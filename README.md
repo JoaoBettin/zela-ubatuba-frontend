@@ -31,9 +31,20 @@ Abra a página com `?mock=1` (por exemplo `http://localhost:8000/?mock=1`) para 
 | `index.html` | Telas (Início, Mapa, Minhas ocorrências) e modais (reportar e detalhe) |
 | `style.css` | Estilos; as cores ficam nas variáveis `:root` no topo |
 | `script.js` | Interface: navegação, mapas, formulário, geolocalização, foto |
+| `admin.html`, `admin.js`, `admin.css` | Tela de administração (painel, solicitações, categorias) |
 | `api.js` | Camada de acesso à API: chamadas, tradução de campos, modo demonstração |
 | `mock-data.js` | Dados fictícios (formato da API) para o modo demonstração |
 | `logo-zela.svg` | Logo provisória |
+
+## Tela de administração
+
+Abra `admin.html` (ou `admin.html?mock=1` para a demonstração). Há um link "Ver site público" no topo.
+
+- **Painel:** total e contagem pelas 5 situações, gráficos por situação, por categoria e novas solicitações nos últimos 14 dias.
+- **Solicitações:** busca (protocolo, descrição, local, e-mail, telefone), filtros por situação e categoria, paginação de 15 em 15, detalhe com foto, telefone, e-mail e coordenadas, **alterar situação** (`PATCH /solicitacoes/{id}/status`), **excluir** (`DELETE`) e **exportar CSV** da lista filtrada.
+- **Categorias:** criar, editar e excluir (`POST/PUT/DELETE /categorias`), com os limites do back-end (nome até 100, descrição até 255, nome não repetido).
+- Concluída e Cancelada são situações finais: a API recusa novas mudanças (422), e a tela já bloqueia o seletor.
+- **Sem login:** a API não tem autenticação, então a tela também não tem. Qualquer um que abrir a página altera dados e vê telefone e e-mail. Usar só em testes até o back-end proteger as rotas (ex.: Spring Security) e o front enviar o token.
 
 ## Integração com a API
 
@@ -90,7 +101,7 @@ Tudo que fala com o servidor está em `api.js`; a interface só usa `window.Zela
 
 ## Testes realizados
 
-- 47 verificações automáticas em navegador (Chromium, desktop e celular) cobrindo: carga de categorias e ocorrências, validação do formulário, GPS, foto, envio e conteúdo do JSON enviado, detalhe com foto sob demanda, mapa e filtros, "Minhas ocorrências" após recarregar, modo demonstração, mensagem de erro quando a API está inacessível ou sem CORS.
+- 63 verificações automáticas da tela de administração (fluxo completo, axe-core, celular, modo demonstração, API fora do ar) e 47 em navegador (Chromium, desktop e celular) cobrindo: carga de categorias e ocorrências, validação do formulário, GPS, foto, envio e conteúdo do JSON enviado, detalhe com foto sob demanda, mapa e filtros, "Minhas ocorrências" após recarregar, modo demonstração, mensagem de erro quando a API está inacessível ou sem CORS.
 - Esses testes usaram um **servidor de teste escrito a partir dos DTOs do back-end, e não a API Spring em execução**. Falta validar a integração contra a API real (principalmente CORS, formato das datas e erros de validação).
 
 ## Pendências sugeridas
