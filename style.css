@@ -1,0 +1,538 @@
+/* ==========================================================
+   Zela Ubatuba — estilos (mobile-first)
+   Para mudar a identidade visual, edite as variáveis abaixo.
+   ========================================================== */
+
+:root {
+  --zu-azul-900: #07324d;
+  --zu-azul-800: #0a4a73;
+  --zu-azul-700: #0b5c8f;
+  --zu-azul-600: #0f6fa8;
+  --zu-verde: #23783f;
+  --zu-verde-escuro: #1b6133;
+  --zu-texto: #1d2a35;
+  --zu-texto-suave: #4a5b68;
+  --zu-fundo: #f3f7fa;
+  --zu-borda: #d5e1ea;
+  --zu-raio: 16px;
+  --zu-sombra: 0 2px 8px rgba(7, 50, 77, 0.08);
+  --zu-sombra-hover: 0 10px 24px rgba(7, 50, 77, 0.18);
+}
+
+body {
+  background: var(--zu-fundo);
+  color: var(--zu-texto);
+}
+
+/* ---------- Acessibilidade ---------- */
+
+.skip-link:focus {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 2000;
+  background: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--zu-azul-600);
+  outline-offset: 2px;
+}
+
+.zu-header :focus-visible,
+.zu-hero :focus-visible {
+  outline-color: #ffd166;
+}
+
+h1[tabindex="-1"]:focus,
+h2[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* ---------- Cabeçalho ---------- */
+
+.zu-header {
+  background: linear-gradient(90deg, var(--zu-azul-900), var(--zu-azul-800));
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.zu-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #fff;
+  text-decoration: none;
+}
+
+.zu-brand:hover {
+  color: #fff;
+}
+
+.zu-brand-texto {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.zu-brand-texto strong {
+  font-size: 1.35rem;
+  letter-spacing: 0.2px;
+}
+
+.zu-brand-texto small {
+  font-size: 0.72rem;
+  opacity: 0.85;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.zu-nav-link {
+  color: #fff;
+  text-decoration: none;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  transition: background-color 0.2s ease;
+}
+
+.zu-nav-link:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.zu-nav-link[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.22);
+  font-weight: 600;
+}
+
+/* ---------- Botão de ação (verde) ---------- */
+
+.btn-zu-acao {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--zu-verde);
+  --bs-btn-border-color: var(--zu-verde);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--zu-verde-escuro);
+  --bs-btn-hover-border-color: var(--zu-verde-escuro);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #174f2d;
+  --bs-btn-active-border-color: #174f2d;
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: var(--zu-verde);
+  --bs-btn-disabled-border-color: var(--zu-verde);
+  --bs-btn-focus-shadow-rgb: 35, 120, 63;
+  font-weight: 600;
+  border-radius: 999px;
+  padding-inline: 1.25rem;
+  box-shadow: 0 4px 12px rgba(35, 120, 63, 0.35);
+}
+
+.zu-cta {
+  margin-top: 0.5rem;
+}
+
+/* ---------- Hero (Início) ---------- */
+
+.zu-hero {
+  background:
+    radial-gradient(1200px 400px at 80% -10%, rgba(255, 255, 255, 0.12), transparent 60%),
+    linear-gradient(160deg, var(--zu-azul-900), var(--zu-azul-700));
+  color: #fff;
+  padding: 2rem 0 2.5rem;
+}
+
+.zu-hero h1 {
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 800;
+}
+
+.zu-hero .lead {
+  max-width: 44rem;
+  opacity: 0.95;
+}
+
+.zu-painel {
+  margin-top: 1.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+.zu-painel-titulo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 1.25rem 0 1rem;
+}
+
+.zu-categorias {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 1rem 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.cat-btn {
+  width: 100%;
+  background: none;
+  border: 0;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.25rem;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+}
+
+.cat-circulo {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 1.6rem;
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cat-btn:hover .cat-circulo,
+.cat-btn:focus-visible .cat-circulo {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 575.98px) {
+  #busca { font-size: 1rem; }
+}
+
+/* ---------- Conteúdo geral ---------- */
+
+.zu-conteudo {
+  padding-block: 1.75rem;
+}
+
+.zu-titulo-pagina {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--zu-azul-800);
+  margin-bottom: 1rem;
+}
+
+.cartao {
+  background: #fff;
+  border: 1px solid var(--zu-borda);
+  border-radius: var(--zu-raio);
+  box-shadow: var(--zu-sombra);
+  padding: 1.1rem;
+}
+
+.cartao-titulo {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* ---------- Mapas ---------- */
+
+.mapa {
+  position: relative;
+  isolation: isolate;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--zu-borda);
+  background: #dfeaf1;
+}
+
+.mapa-home { flex: 1 1 auto; min-height: 340px; }
+.mapa-completo { height: 62vh; min-height: 380px; }
+.mapa-picker { height: 240px; }
+
+.mapa-falha {
+  margin: 0;
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--zu-texto-suave);
+}
+
+.zu-pin {
+  background: none;
+  border: 0;
+}
+
+.zu-pin svg {
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+
+.popup-zu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: flex-start;
+}
+
+.zu-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.9rem 0 0;
+  font-size: 0.88rem;
+}
+
+.legenda-pin {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-right: 0.45rem;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+}
+
+/* ---------- Lista de ocorrências ---------- */
+
+.lista-ocorrencias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  /* minmax(0, 1fr): a coluna nunca passa da largura do quadro, mesmo com texto longo */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.6rem;
+}
+
+.ocorrencia-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  text-align: left;
+  color: inherit;
+  background: #fff;
+  border: 1px solid var(--zu-borda);
+  border-radius: 14px;
+  padding: 0.6rem 0.75rem;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.ocorrencia-item:hover {
+  box-shadow: var(--zu-sombra-hover);
+  transform: translateY(-2px);
+  border-color: var(--zu-azul-600);
+}
+
+.ocorrencia-foto {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+}
+
+.ocorrencia-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.ocorrencia-titulo {
+  font-weight: 700;
+}
+
+.ocorrencia-local {
+  font-size: 0.9rem;
+  color: var(--zu-texto-suave);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ocorrencia-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--zu-texto-suave);
+}
+
+.ocorrencia-seta {
+  color: #6b7c88;
+}
+
+/* ---------- Badges de status ---------- */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.status-badge::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-aberta { background: #d9e8f7; color: #0a3a63; }
+.status-em_analise { background: #fff1c2; color: #6b4f00; }
+.status-em_andamento { background: #ffe3cc; color: #8a3b00; }
+.status-concluida { background: #d3efdd; color: #0f5a2c; }
+.status-cancelada { background: #e5e8eb; color: #3b4650; }
+
+/* ---------- Modais ---------- */
+
+#formOcorrencia {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#fotoImg {
+  max-height: 160px;
+}
+
+#detalheFoto img {
+  max-height: 280px;
+  object-fit: contain;
+}
+
+#fotoMsg:empty {
+  display: none;
+}
+
+/* ---------- Rodapé ---------- */
+
+.zu-footer a {
+  color: var(--zu-azul-700);
+}
+
+.zu-footer {
+  color: var(--zu-texto-suave);
+  font-size: 0.85rem;
+  padding: 1.5rem 0;
+  text-align: center;
+}
+
+/* ---------- Avisos ---------- */
+
+.zu-toasts {
+  z-index: 1090;
+}
+
+/* ---------- Navegação inferior (celular) ---------- */
+
+.zu-bottom-nav {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 1030;
+  background: #fff;
+  border-top: 1px solid var(--zu-borda);
+  box-shadow: 0 -4px 16px rgba(7, 50, 77, 0.12);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.zu-bottom-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem 0.25rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: end;
+}
+
+.zu-bottom-nav a,
+.zu-fab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  width: 100%;
+  font-size: 0.7rem;
+  line-height: 1.15;
+  text-align: center;
+  color: #42525e;
+  text-decoration: none;
+  padding: 0.35rem 0.1rem;
+  border-radius: 12px;
+  background: none;
+  border: 0;
+}
+
+.zu-bottom-nav a i {
+  font-size: 1.35rem;
+}
+
+.zu-bottom-nav a[aria-current="page"] {
+  color: var(--zu-azul-700);
+  font-weight: 700;
+}
+
+.zu-fab {
+  color: var(--zu-verde-escuro);
+  font-weight: 600;
+}
+
+.zu-fab i {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-top: -26px;
+  border-radius: 50%;
+  background: var(--zu-verde);
+  color: #fff;
+  font-size: 1.5rem;
+  border: 3px solid #fff;
+  box-shadow: 0 6px 14px rgba(35, 120, 63, 0.45);
+}
+
+@media (max-width: 991.98px) {
+  body { padding-bottom: 84px; }
+  .zu-toasts { bottom: 84px !important; }
+}
+
+@media (min-width: 992px) {
+  .zu-hero { padding: 3rem 0 3.5rem; }
+  .zu-painel { padding: 1.75rem 2rem; }
+}
+
+/* ---------- Movimento reduzido ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  .cat-btn:hover .cat-circulo,
+  .cat-btn:focus-visible .cat-circulo,
+  .ocorrencia-item:hover {
+    transform: none;
+  }
+}
