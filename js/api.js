@@ -48,7 +48,7 @@
 
   const CONFIG = {
     // true = sempre usar dados fictícios. Também ativado por ?mock=1 na URL.
-    USE_MOCK: new URLSearchParams(busca).get('mock') === '1',
+    USE_MOCK: true,
     BASE_URL: 'http://localhost:8080/api/v1',
     TIMEOUT_MS: 15000,
     MOCK_LATENCY_MS: 300,
