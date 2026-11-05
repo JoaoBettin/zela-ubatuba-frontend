@@ -355,3 +355,9 @@
 .adm-tabela-quadro .dt-search label {
   color: var(--zu-texto-suave);
 }
+
+/* O DataTables deixa o quadro da tabela com rolagem automática; uma sobra de 1px
+   fazia aparecer uma barra vertical no Windows. Só a rolagem horizontal é útil. */
+.dt-container .dt-layout-table {
+  overflow-y: hidden;
+}
