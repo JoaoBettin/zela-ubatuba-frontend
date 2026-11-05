@@ -22,7 +22,7 @@ Bootstrap, ícones e Leaflet vêm de CDN, então é preciso estar conectado à i
 
 ### Modo demonstração (sem back-end)
 
-Abra a página com `?mock=1` (por exemplo `http://localhost:8000/?mock=1`) para usar dados fictícios no **mesmo formato da API real**. As ocorrências criadas ficam só no navegador. Um aviso aparece no rodapé. Para usar sempre esse modo, troque `USE_MOCK` para `true` em `api.js`.
+Abra a página com `?mock=1` (por exemplo `http://localhost:8000/?mock=1`) para usar dados fictícios no **mesmo formato da API real**. As ocorrências criadas ficam só no navegador. Um aviso aparece no rodapé. O modo também liga **sozinho quando o site está na Vercel** (endereço `*.vercel.app`), onde ainda não há API acessível; use `?mock=0` para forçar a API real. Em `localhost` o padrão é a API real.
 
 ## Estrutura
 

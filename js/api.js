@@ -45,10 +45,24 @@
      ========================================================== */
 
   const busca = (window.location && window.location.search) || '';
+  const host = (window.location && window.location.hostname) || '';
+
+  /**
+   * Modo demonstração (dados fictícios, sem back-end):
+   *   ?mock=1  liga em qualquer lugar;   ?mock=0  desliga em qualquer lugar;
+   *   sem parâmetro: liga sozinho quando o site está publicado na Vercel (*.vercel.app),
+   *   onde ainda não existe uma API acessível. Em localhost usa a API real.
+   */
+  function usarMock() {
+    const pedido = new URLSearchParams(busca).get('mock');
+    if (pedido === '1') return true;
+    if (pedido === '0') return false;
+    return /\.vercel\.app$/i.test(host);
+  }
 
   const CONFIG = {
-    // true = sempre usar dados fictícios. Também ativado por ?mock=1 na URL.
-    USE_MOCK: new URLSearchParams(busca).get('mock') === '1',
+    // true = usar dados fictícios (ver usarMock acima).
+    USE_MOCK: usarMock(),
     BASE_URL: 'http://localhost:8080/api/v1',
     TIMEOUT_MS: 15000,
     MOCK_LATENCY_MS: 300,
