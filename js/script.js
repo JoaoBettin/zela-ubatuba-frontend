@@ -800,6 +800,22 @@
     $('#formOcorrencia').addEventListener('submit', aoEnviarFormulario);
     $('#btnGps').addEventListener('click', capturarLocalizacao);
     $('#fFoto').addEventListener('change', aoEscolherFoto);
+    // Câmera: o atributo "capture" abre direto a câmera do celular. A foto tirada
+    // é passada para o campo principal, que faz a validação e a pré-visualização.
+    $('#btnTirarFoto').addEventListener('click', () => $('#fFotoCamera').click());
+    $('#fFotoCamera').addEventListener('change', (e) => {
+      const arquivo = e.target.files[0];
+      if (!arquivo) return;
+      try {
+        const lote = new DataTransfer();
+        lote.items.add(arquivo);
+        $('#fFoto').files = lote.files;
+        $('#fFoto').dispatchEvent(new Event('change', { bubbles: true }));
+      } catch (erro) {
+        $('#fotoMsg').textContent = 'Não foi possível usar a câmera neste aparelho. Escolha uma imagem da galeria.';
+      }
+      e.target.value = '';
+    });
     $('#btnRemoverFoto').addEventListener('click', () => {
       limparFoto();
       $('#fFoto').focus();

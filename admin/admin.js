@@ -25,9 +25,8 @@
   const estado = {
     categorias: [],
     solicitacoes: [],
-    pagina: 0,
-    filtradas: [],
-    atualId: null, // solicitação aberta no modal
+    atual: null, // solicitação aberta no modal
+    atualId: null,
     aoConfirmar: null,
   };
 
@@ -87,24 +86,22 @@
      Carga de dados
      ========================================================== */
 
+  /** Carrega categorias e a lista completa (para o painel) e atualiza as tabelas. */
   async function carregar() {
     $('#erroCarga').hidden = true;
     try {
       const [categorias, solicitacoes] = await Promise.all([API.listarCategorias(), API.listarOcorrenciasAdmin()]);
       estado.categorias = categorias;
       estado.solicitacoes = solicitacoes;
-      renderTudo();
+      renderPainel();
+      renderFiltrosOpcoes();
+      renderCategorias();
+      if (tabelaSol) tabelaSol.ajax.reload(null, false);
+      else iniciarTabelaSolicitacoes();
     } catch (erro) {
       $('#erroCargaTexto').textContent = mensagemDeErro(erro);
       $('#erroCarga').hidden = false;
     }
-  }
-
-  function renderTudo() {
-    renderPainel();
-    renderFiltrosOpcoes();
-    renderSolicitacoes();
-    renderCategorias();
   }
 
   /* ==========================================================
@@ -191,8 +188,29 @@
   }
 
   /* ==========================================================
-     Solicitações: filtros, tabela, paginação
+     Solicitações: DataTables com paginação no servidor
      ========================================================== */
+
+  const LINGUAGEM = {
+    emptyTable: 'Nenhuma solicitação encontrada.',
+    zeroRecords: 'Nenhum registro encontrado.',
+    info: 'Mostrando _START_ a _END_ de _TOTAL_',
+    infoEmpty: 'Nenhuma solicitação',
+    infoFiltered: '',
+    lengthMenu: 'Mostrar _MENU_ por página',
+    loadingRecords: 'Carregando…',
+    processing: 'Carregando…',
+    search: 'Buscar:',
+    searchPlaceholder: 'Digite para filtrar',
+    paginate: { first: 'Primeira', last: 'Última', next: 'Próxima', previous: 'Anterior' },
+    aria: { paginate: { first: 'Primeira página', last: 'Última página', next: 'Próxima página', previous: 'Página anterior' } },
+  };
+
+  let tabelaSol = null;
+  let tabelaCat = null;
+
+  // coluna da tabela -> campo ordenável no back-end (null = não ordena)
+  const CAMPOS_ORDEM = ['lngId', null, 'strDescricao', 'dtmSolicitacao', 'strStatus', null];
 
   function renderFiltrosOpcoes() {
     const selStatus = $('#fStatus');
@@ -206,52 +224,57 @@
     selCat.value = estado.categorias.some((c) => c.id === valorCat) ? valorCat : '';
   }
 
-  function aplicarFiltros() {
-    const termo = normalizar($('#fBusca').value.trim());
-    const status = $('#fStatus').value;
-    const categoria = $('#fCategoria').value;
-    estado.filtradas = estado.solicitacoes.filter((s) => {
-      if (status && s.status !== status) return false;
-      if (categoria && s.categoria !== categoria) return false;
-      if (!termo) return true;
-      return normalizar([s.protocolo, s.descricao, s.bairro, s.email, s.telefone, s.categoriaInfo && s.categoriaInfo.nome].join(' ')).includes(termo);
-    });
-  }
+  const filtrosAtuais = () => ({ status: $('#fStatus').value, categoria: $('#fCategoria').value });
 
-  function renderSolicitacoes() {
-    aplicarFiltros();
-    const total = estado.filtradas.length;
-    const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
-    estado.pagina = Math.min(estado.pagina, paginas - 1);
-    const inicio = estado.pagina * POR_PAGINA;
-    const visiveis = estado.filtradas.slice(inicio, inicio + POR_PAGINA);
-
-    $('#contagem').textContent = total === estado.solicitacoes.length
-      ? `${plural(total, 'solicitação', 'solicitações')}.`
-      : `${plural(total, 'solicitação encontrada', 'solicitações encontradas')} de ${estado.solicitacoes.length}.`;
-
-    const corpo = limpar($('#tabelaSolicitacoes'));
-    if (visiveis.length === 0) {
-      corpo.append(h('tr', {}, h('td', { colspan: '6', class: 'adm-vazio' }, 'Nenhuma solicitação encontrada.')));
-    }
-    visiveis.forEach((s) => {
-      const botao = h('button', { type: 'button', class: 'btn btn-sm btn-outline-primary', onclick: () => abrirSolicitacao(s.id) },
-        icone('bi-eye'), ' Abrir', h('span', { class: 'visually-hidden' }, ` ${s.protocolo}`));
-      corpo.append(h('tr', {},
-        h('td', { class: 'adm-protocolo' }, s.protocolo),
-        h('td', {}, s.categoriaInfo ? s.categoriaInfo.nome : '—'),
-        h('td', { class: 'adm-celula-texto' },
+  function iniciarTabelaSolicitacoes() {
+    tabelaSol = new DataTable('#tabelaSolicitacoes', {
+      serverSide: true,
+      processing: true,
+      searching: false, // a API só filtra por situação e categoria
+      pageLength: 15,
+      lengthMenu: [10, 15, 25, 50],
+      order: [[3, 'desc']],
+      language: LINGUAGEM,
+      columns: [
+        { data: null, defaultContent: '', className: 'adm-protocolo' },
+        { data: null, defaultContent: '', orderable: false },
+        { data: null, defaultContent: '', className: 'adm-celula-texto' },
+        { data: null, defaultContent: '', className: 'text-nowrap' },
+        { data: null, defaultContent: '' },
+        { data: null, defaultContent: '', orderable: false, className: 'text-end' },
+      ],
+      // O DataTables pergunta "página X, N linhas, ordenado por Y"; traduzimos para a API Spring.
+      ajax: (dt, retorno) => {
+        const ordem = dt.order[0] || { column: 3, dir: 'desc' };
+        API.listarPaginaAdmin({
+          pagina: Math.floor(dt.start / dt.length),
+          tamanho: dt.length,
+          ordenar: CAMPOS_ORDEM[ordem.column] || 'dtmSolicitacao',
+          direcao: ordem.dir,
+          ...filtrosAtuais(),
+        }).then((r) => {
+          $('#erroCarga').hidden = true;
+          retorno({ draw: dt.draw, recordsTotal: r.total, recordsFiltered: r.total, data: r.itens });
+        }).catch((erro) => {
+          retorno({ draw: dt.draw, recordsTotal: 0, recordsFiltered: 0, data: [] });
+          $('#erroCargaTexto').textContent = mensagemDeErro(erro);
+          $('#erroCarga').hidden = false;
+        });
+      },
+      // Monta as células com createElement (texto sempre como texto, nunca como HTML).
+      createdRow: (linha, s) => {
+        const celulas = linha.children;
+        celulas[0].textContent = s.protocolo;
+        celulas[1].textContent = s.categoriaInfo ? s.categoriaInfo.nome : '—';
+        celulas[2].append(
           h('span', { class: 'adm-linha-1' }, s.descricao),
-          h('span', { class: 'adm-linha-2' }, s.bairro || 'Sem ponto de referência')),
-        h('td', { class: 'text-nowrap' }, formatarData(s.criadoEm)),
-        h('td', {}, badgeStatus(s.status)),
-        h('td', { class: 'text-end' }, botao)));
+          h('span', { class: 'adm-linha-2' }, s.bairro || 'Sem ponto de referência'));
+        celulas[3].textContent = formatarData(s.criadoEm);
+        celulas[4].append(badgeStatus(s.status));
+        celulas[5].append(h('button', { type: 'button', class: 'btn btn-sm btn-outline-primary', onclick: () => abrirSolicitacao(s) },
+          icone('bi-eye'), ' Abrir', h('span', { class: 'visually-hidden' }, ` ${s.protocolo}`)));
+      },
     });
-
-    $('#paginacao').hidden = paginas <= 1;
-    $('#paginaInfo').textContent = `Página ${estado.pagina + 1} de ${paginas}`;
-    $('#btnAnterior').disabled = estado.pagina === 0;
-    $('#btnProxima').disabled = estado.pagina >= paginas - 1;
   }
 
   /* ---------- Exportar CSV ---------- */
@@ -262,20 +285,34 @@
     return `"${texto.replace(/"/g, '""')}"`;
   }
 
-  function exportarCsv() {
+  /** Exporta tudo que bate com os filtros de situação e categoria (até 1000 itens). */
+  async function exportarCsv() {
+    const botao = $('#btnExportar');
+    botao.disabled = true;
+    let lista;
+    try {
+      lista = await API.listarOcorrenciasAdmin(filtrosAtuais());
+    } catch (e) {
+      aviso(mensagemDeErro(e), 'danger');
+      botao.disabled = false;
+      botao.focus();
+      return;
+    }
     const cabecalho = ['Protocolo', 'Categoria', 'Descrição', 'Local', 'Latitude', 'Longitude', 'Telefone', 'E-mail', 'Situação', 'Registrada em', 'Atualizada em'];
-    const linhas = estado.filtradas.map((s) => [
+    const linhas = lista.map((s) => [
       s.protocolo, s.categoriaInfo ? s.categoriaInfo.nome : '', s.descricao, s.bairro, s.latitude, s.longitude,
       s.telefone, s.email, ROTULO[s.status] || s.status, formatarData(s.criadoEm), formatarData(s.atualizadoEm),
     ]);
     const csv = [cabecalho, ...linhas].map((l) => l.map(celulaCsv).join(';')).join('\r\n');
-    const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = h('a', { href: url, download: `solicitacoes-zela-ubatuba-${new Date().toISOString().slice(0, 10)}.csv` });
     document.body.append(link);
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+    botao.disabled = false;
+    botao.focus();
     aviso(`${plural(linhas.length, 'solicitação exportada', 'solicitações exportadas')}. O arquivo contém telefone e e-mail: guarde com cuidado.`);
   }
 
@@ -283,10 +320,9 @@
      Detalhe da solicitação
      ========================================================== */
 
-  const buscarSolicitacao = (id) => estado.solicitacoes.find((s) => s.id === id);
-
-  function abrirSolicitacao(id) {
-    estado.atualId = id;
+  function abrirSolicitacao(s) {
+    estado.atual = s;
+    estado.atualId = s.id;
     renderDetalhe();
     modal('modalSolicitacao').show();
   }
@@ -297,7 +333,7 @@
   }
 
   function renderDetalhe({ focarFormulario = false } = {}) {
-    const s = buscarSolicitacao(estado.atualId);
+    const s = estado.atual;
     if (!s) return;
     $('#solTitulo').textContent = `Solicitação ${s.protocolo}`;
     const corpo = limpar($('#solCorpo'));
@@ -371,8 +407,8 @@
       try {
         const atualizada = await API.atualizarStatus(s.id, novo);
         Object.assign(s, { status: atualizada.status, atualizadoEm: atualizada.atualizadoEm });
-        renderTudo();
         renderDetalhe({ focarFormulario: true });
+        carregar(); // atualiza painel e tabela
         aviso(`Situação de ${s.protocolo} alterada para “${ROTULO[s.status]}”.`);
       } catch (e) {
         erro.textContent = mensagemDeErro(e);
@@ -414,7 +450,7 @@
   }
 
   function pedirExclusaoSolicitacao() {
-    const s = buscarSolicitacao(estado.atualId);
+    const s = estado.atual;
     if (!s) return;
     const el = document.getElementById('modalSolicitacao');
     el.addEventListener('hidden.bs.modal', () => {
@@ -423,9 +459,9 @@
         texto: `A solicitação ${s.protocolo} (${s.categoriaInfo ? s.categoriaInfo.nome : 'sem categoria'}) deixará de aparecer no site e no painel. Essa ação não pode ser desfeita por aqui.`,
         acao: async () => {
           await API.excluirOcorrencia(s.id);
-          estado.solicitacoes = estado.solicitacoes.filter((x) => x.id !== s.id);
+          estado.atual = null;
           estado.atualId = null;
-          renderTudo();
+          await carregar();
           aviso(`Solicitação ${s.protocolo} excluída.`);
         },
       });
@@ -437,12 +473,17 @@
      Categorias
      ========================================================== */
 
+  /** Categorias são poucas: o DataTables ordena e busca no próprio navegador. */
   function renderCategorias() {
     const contagem = contar(estado.solicitacoes, (s) => s.categoria);
-    const corpo = limpar($('#tabelaCategorias'));
-    if (estado.categorias.length === 0) {
-      corpo.append(h('tr', {}, h('td', { colspan: '4', class: 'adm-vazio' }, 'Nenhuma categoria cadastrada.')));
+    if (tabelaCat) {
+      tabelaCat.destroy();
+      tabelaCat = null;
     }
+    const tabela = $('#tabelaCategorias');
+    const antigo = tabela.querySelector('tbody');
+    if (antigo) antigo.remove();
+    const corpo = h('tbody');
     estado.categorias.forEach((c) => {
       const n = contagem.get(c.id) || 0;
       corpo.append(h('tr', {},
@@ -454,6 +495,14 @@
             icone('bi-pencil'), ' Editar', h('span', { class: 'visually-hidden' }, ` ${c.nome}`)),
           h('button', { type: 'button', class: 'btn btn-sm btn-outline-danger', onclick: () => pedirExclusaoCategoria(c, n) },
             icone('bi-trash3'), ' Excluir', h('span', { class: 'visually-hidden' }, ` ${c.nome}`)))));
+    });
+    tabela.append(corpo);
+    tabelaCat = new DataTable('#tabelaCategorias', {
+      paging: false,
+      info: false,
+      order: [[0, 'asc']],
+      columnDefs: [{ targets: 3, orderable: false }],
+      language: { ...LINGUAGEM, emptyTable: 'Nenhuma categoria cadastrada.', search: 'Buscar categoria:' },
     });
   }
 
@@ -551,20 +600,16 @@
     mostrarView(viewDoHash());
     window.addEventListener('hashchange', () => mostrarView(viewDoHash(), { foco: true }));
 
-    ['fBusca', 'fStatus', 'fCategoria'].forEach((id) => {
-      document.getElementById(id).addEventListener('input', () => { estado.pagina = 0; renderSolicitacoes(); });
+    ['fStatus', 'fCategoria'].forEach((id) => {
+      document.getElementById(id).addEventListener('change', () => { if (tabelaSol) tabelaSol.ajax.reload(); });
     });
     $('#filtros').addEventListener('submit', (ev) => ev.preventDefault());
     $('#btnLimpar').addEventListener('click', () => {
-      $('#fBusca').value = '';
       $('#fStatus').value = '';
       $('#fCategoria').value = '';
-      estado.pagina = 0;
-      renderSolicitacoes();
-      $('#fBusca').focus();
+      if (tabelaSol) tabelaSol.ajax.reload();
+      $('#fStatus').focus();
     });
-    $('#btnAnterior').addEventListener('click', () => { estado.pagina -= 1; renderSolicitacoes(); });
-    $('#btnProxima').addEventListener('click', () => { estado.pagina += 1; renderSolicitacoes(); });
     $('#btnExportar').addEventListener('click', exportarCsv);
 
     $('#btnExcluirSolicitacao').addEventListener('click', pedirExclusaoSolicitacao);

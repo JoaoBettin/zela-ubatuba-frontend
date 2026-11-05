@@ -22,7 +22,7 @@ Bootstrap, ícones e Leaflet vêm de CDN, então é preciso estar conectado à i
 
 ### Modo demonstração (sem back-end)
 
-Abra a página com `?mock=1` (por exemplo `http://localhost:8000/?mock=1`) para usar dados fictícios no **mesmo formato da API real**. As ocorrências criadas ficam só no navegador. Um aviso aparece no rodapé. Para usar sempre esse modo, troque `USE_MOCK` para `true` em `api.js`.
+Abra a página com `?mock=1` (por exemplo `http://localhost:8000/?mock=1`) para usar dados fictícios no **mesmo formato da API real**. As ocorrências criadas ficam só no navegador. Um aviso aparece no rodapé. O modo também liga **sozinho quando o site está na Vercel** (endereço `*.vercel.app`), onde ainda não há API acessível; use `?mock=0` para forçar a API real. Em `localhost` o padrão é a API real.
 
 ## Estrutura
 
@@ -42,6 +42,19 @@ zela-ubatuba-frontend/
 ├── .gitignore
 └── README.md
 ```
+
+## Tela de administração
+
+Abra `/admin/` (por exemplo `http://localhost:8000/admin/`, ou `/admin/?mock=1` para a demonstração). Há um link "Ver site público" no topo.
+
+- **Painel:** total e contagem pelas 5 situações, gráficos por situação, por categoria e novas solicitações nos últimos 14 dias.
+- **Solicitações:** tabela [DataTables](https://datatables.net/) em modo **server-side**. A cada página, ordenação ou filtro, o DataTables chama `GET /solicitacoes?page=&size=&sort=&strStatus=&lngCategoriaId=` e recebe só aquela página (`totalElements` vira o total). Filtros por situação e categoria, detalhe com foto, telefone, e-mail e coordenadas, **alterar situação** (`PATCH /solicitacoes/{id}/status`), **excluir** (`DELETE`) e **exportar CSV** (até 1000 itens, respeitando os filtros).
+- **Categorias:** tabela DataTables com busca e ordenação no navegador (são poucas). Criar, editar e excluir (`POST/PUT/DELETE /categorias`), com os limites do back-end (nome até 100, descrição até 255, nome não repetido).
+- Concluída e Cancelada são situações finais: a API recusa novas mudanças (422), e a tela já bloqueia o seletor.
+- **Limitações do server-side:** a API não tem busca por texto, então a tabela de solicitações não tem caixa de busca (só os filtros de situação e categoria). Ela ordena por protocolo, descrição, data e situação (campos `lngId`, `strDescricao`, `dtmSolicitacao`, `strStatus`; a situação ordena em ordem alfabética). Se o back-end ganhar um parâmetro de busca, ligue `searching` em `iniciarTabelaSolicitacoes` (`admin/admin.js`) e repasse o termo em `listarPaginaAdmin` (`js/api.js`).
+- No modo demonstração (`?mock=1`), o navegador simula a mesma API paginada e ordenada.
+- **Sem login:** a API não tem autenticação, então a tela também não tem. Qualquer um que abrir a página altera dados e vê telefone e e-mail. Usar só em testes até o back-end proteger as rotas (ex.: Spring Security) e o front enviar o token.
+- DataTables 2.1.8 e jQuery 3.7.1 vêm de CDN (jsDelivr), como o Bootstrap.
 
 ## Integração com a API
 
@@ -98,7 +111,7 @@ Tudo que fala com o servidor está em `api.js`; a interface só usa `window.Zela
 
 ## Testes realizados
 
-- 63 verificações automáticas da tela de administração (fluxo completo, axe-core, celular, modo demonstração, API fora do ar) e 47 em navegador (Chromium, desktop e celular) cobrindo: carga de categorias e ocorrências, validação do formulário, GPS, foto, envio e conteúdo do JSON enviado, detalhe com foto sob demanda, mapa e filtros, "Minhas ocorrências" após recarregar, modo demonstração, mensagem de erro quando a API está inacessível ou sem CORS.
+- 45 verificações automáticas da tela de administração (DataTables server-side, filtros, situação, exclusão, CSV, categorias, texto com HTML exibido como texto, axe-core, celular, modo demonstração, API fora do ar) e 47 do site público, em navegador (Chromium, desktop e celular) cobrindo: carga de categorias e ocorrências, validação do formulário, GPS, foto, envio e conteúdo do JSON enviado, detalhe com foto sob demanda, mapa e filtros, "Minhas ocorrências" após recarregar, modo demonstração, mensagem de erro quando a API está inacessível ou sem CORS.
 - Esses testes usaram um **servidor de teste escrito a partir dos DTOs do back-end, e não a API Spring em execução**. Falta validar a integração contra a API real (principalmente CORS, formato das datas e erros de validação).
 
 ## Pendências sugeridas
