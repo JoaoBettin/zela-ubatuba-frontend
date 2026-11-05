@@ -188,24 +188,14 @@
 
 .adm-filtros {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)) minmax(0, 0.8fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 0.7fr);
   gap: 0.75rem;
 }
 
-@media (max-width: 991.98px) {
-  .adm-filtros {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-  .adm-filtros > :first-child {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 575.98px) {
+@media (max-width: 767.98px) {
   .adm-filtros {
     grid-template-columns: minmax(0, 1fr);
   }
-  .adm-filtros input,
   .adm-filtros select {
     font-size: 1rem;
   }
@@ -330,4 +320,38 @@
 
 .adm-dl a {
   color: var(--zu-azul-700);
+}
+
+/* ---------- DataTables ---------- */
+
+.adm-tabela-quadro .dt-container {
+  max-width: 100%;
+}
+
+.adm-tabela-quadro .dt-layout-table {
+  overflow-x: auto;
+}
+
+.adm-tabela-quadro .dt-layout-row {
+  padding: 0.25rem 0.5rem;
+}
+
+.adm-tabela-quadro .dt-info,
+.adm-tabela-quadro .dt-length label {
+  color: var(--zu-texto-suave);
+  font-size: 0.9rem;
+}
+
+.adm-tabela-quadro .page-link {
+  color: var(--zu-azul-700);
+}
+
+.adm-tabela-quadro .page-item.active .page-link {
+  background: var(--zu-azul-700);
+  border-color: var(--zu-azul-700);
+  color: #fff;
+}
+
+.adm-tabela-quadro .dt-search label {
+  color: var(--zu-texto-suave);
 }

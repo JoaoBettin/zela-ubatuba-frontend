@@ -10,6 +10,7 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@2.1.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
   <link href="../css/style.css" rel="stylesheet">
   <link href="admin.css" rel="stylesheet">
 </head>
@@ -92,10 +93,6 @@
 
       <form id="filtros" class="cartao adm-filtros" role="search" aria-label="Filtrar solicitações">
         <div>
-          <label for="fBusca" class="form-label">Buscar</label>
-          <input id="fBusca" type="search" class="form-control" placeholder="Protocolo, descrição, local ou e-mail" autocomplete="off">
-        </div>
-        <div>
           <label for="fStatus" class="form-label">Situação</label>
           <select id="fStatus" class="form-select"><option value="">Todas</option></select>
         </div>
@@ -108,32 +105,21 @@
         </div>
       </form>
 
-      <p id="contagem" class="text-body-secondary small mt-3 mb-2" role="status"></p>
-
-      <div class="cartao p-0 adm-tabela-quadro">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0 adm-tabela">
-            <caption class="visually-hidden">Lista de solicitações, da mais recente para a mais antiga</caption>
-            <thead>
-              <tr>
-                <th scope="col">Protocolo</th>
-                <th scope="col">Categoria</th>
-                <th scope="col">Descrição e local</th>
-                <th scope="col">Registrada em</th>
-                <th scope="col">Situação</th>
-                <th scope="col"><span class="visually-hidden">Ações</span></th>
-              </tr>
-            </thead>
-            <tbody id="tabelaSolicitacoes"></tbody>
-          </table>
-        </div>
+      <div class="cartao p-2 mt-3 adm-tabela-quadro">
+        <table id="tabelaSolicitacoes" class="table table-hover align-middle w-100 adm-tabela">
+          <caption class="visually-hidden">Lista de solicitações</caption>
+          <thead>
+            <tr>
+              <th scope="col">Protocolo</th>
+              <th scope="col">Categoria</th>
+              <th scope="col">Descrição e local</th>
+              <th scope="col">Registrada em</th>
+              <th scope="col">Situação</th>
+              <th scope="col"><span class="visually-hidden">Ações</span></th>
+            </tr>
+          </thead>
+        </table>
       </div>
-
-      <nav id="paginacao" class="d-flex align-items-center justify-content-between gap-2 mt-3" aria-label="Paginação" hidden>
-        <button type="button" id="btnAnterior" class="btn btn-outline-primary btn-sm"><i class="bi bi-chevron-left" aria-hidden="true"></i> Anterior</button>
-        <span id="paginaInfo" class="small text-body-secondary"></span>
-        <button type="button" id="btnProxima" class="btn btn-outline-primary btn-sm">Próxima <i class="bi bi-chevron-right" aria-hidden="true"></i></button>
-      </nav>
     </section>
 
     <!-- ============ Categorias ============ -->
@@ -145,21 +131,18 @@
         </button>
       </div>
 
-      <div class="cartao p-0 adm-tabela-quadro">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0 adm-tabela">
-            <caption class="visually-hidden">Categorias de problemas urbanos</caption>
-            <thead>
-              <tr>
-                <th scope="col">Categoria</th>
-                <th scope="col">Descrição</th>
-                <th scope="col" class="text-end">Solicitações</th>
-                <th scope="col"><span class="visually-hidden">Ações</span></th>
-              </tr>
-            </thead>
-            <tbody id="tabelaCategorias"></tbody>
-          </table>
-        </div>
+      <div class="cartao p-2 adm-tabela-quadro">
+        <table id="tabelaCategorias" class="table table-hover align-middle w-100 adm-tabela">
+          <caption class="visually-hidden">Categorias de problemas urbanos</caption>
+          <thead>
+            <tr>
+              <th scope="col">Categoria</th>
+              <th scope="col">Descrição</th>
+              <th scope="col" class="text-end">Solicitações</th>
+              <th scope="col"><span class="visually-hidden">Ações</span></th>
+            </tr>
+          </thead>
+        </table>
       </div>
     </section>
   </main>
@@ -244,6 +227,9 @@
   <div id="toasts" class="toast-container position-fixed end-0 bottom-0 p-3 zu-toasts" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/datatables.net@2.1.8/js/dataTables.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@2.1.8/js/dataTables.bootstrap5.min.js" defer></script>
   <script src="../js/mock-data.js" defer></script>
   <script src="../js/api.js" defer></script>
   <script src="admin.js" defer></script>

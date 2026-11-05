@@ -11,7 +11,7 @@
  *   GET  /solicitacoes/{lngId}
  *   GET  /solicitacoes/{lngId}/imagem                (foto em Base64)
  *   POST /solicitacoes                               (JSON, foto em Base64)
- *   --- só a tela de administração (admin.html) ---
+ *   --- só a tela de administração (admin/) ---
  *   PATCH  /solicitacoes/{lngId}/status              ({ strStatus })
  *   DELETE /solicitacoes/{lngId}                     (exclusão lógica)
  *   POST/PUT/DELETE /categorias[/{lngId}]            ({ strNome, strDescricao })
@@ -48,7 +48,7 @@
 
   const CONFIG = {
     // true = sempre usar dados fictícios. Também ativado por ?mock=1 na URL.
-    USE_MOCK: true,
+    USE_MOCK: new URLSearchParams(busca).get('mock') === '1',
     BASE_URL: 'http://localhost:8080/api/v1',
     TIMEOUT_MS: 15000,
     MOCK_LATENCY_MS: 300,
@@ -291,7 +291,14 @@
     let lista = mockSolicitacoes();
     if (status) lista = lista.filter((s) => s.strStatus === status);
     if (categoria) lista = lista.filter((s) => String(s.categoria.lngId) === categoria);
-    lista.sort((a, b) => (a.dtmSolicitacao < b.dtmSolicitacao ? 1 : -1));
+    // sort=campo,direcao (como o Spring); padrão: mais recentes primeiro
+    const [campo, direcao] = String(q.get('sort') || 'dtmSolicitacao,desc').split(',');
+    const sinal = direcao === 'asc' ? 1 : -1;
+    lista.sort((a, b) => {
+      const x = a[campo] ?? '';
+      const y = b[campo] ?? '';
+      return (x < y ? -1 : x > y ? 1 : 0) * sinal || (a.lngId - b.lngId) * sinal;
+    });
     const pagina = Math.max(0, parseInt(q.get('page') || '0', 10) || 0);
     const tamanho = Math.min(Math.max(1, parseInt(q.get('size') || '10', 10) || 10), 2000);
     return {
@@ -578,6 +585,23 @@
   /** Como listarOcorrencias, mas mantém telefone e e-mail do cidadão. */
   const listarOcorrenciasAdmin = (filtros = {}) => listarOcorrencias(filtros, true);
 
+  /**
+   * Uma página da lista, para tabelas com paginação no servidor (DataTables).
+   * ordenar: lngId | strDescricao | dtmSolicitacao | strStatus   direcao: asc | desc
+   * Devolve { itens (com telefone e e-mail), total }.
+   */
+  async function listarPaginaAdmin({ pagina = 0, tamanho = 15, ordenar = 'dtmSolicitacao', direcao = 'desc', status = '', categoria = '' } = {}) {
+    const params = new URLSearchParams({
+      page: pagina,
+      size: tamanho,
+      sort: `${ordenar},${direcao === 'asc' ? 'asc' : 'desc'}`,
+    });
+    if (status) params.set('strStatus', String(status).toUpperCase());
+    if (categoria) params.set('lngCategoriaId', categoria);
+    const r = await transporte()(`/solicitacoes?${params}`);
+    return { itens: (r.content || []).map((s) => adaptarSolicitacao(s, true)), total: r.totalElements ?? 0 };
+  }
+
   /** status: aberta | em_analise | em_andamento | concluida | cancelada */
   async function atualizarStatus(id, status) {
     const r = await transporte()(`/solicitacoes/${encodeURIComponent(id)}/status`, {
@@ -617,6 +641,7 @@
     criarOcorrencia,
     obterFoto,
     listarOcorrenciasAdmin,
+    listarPaginaAdmin,
     atualizarStatus,
     excluirOcorrencia,
     criarCategoria,
